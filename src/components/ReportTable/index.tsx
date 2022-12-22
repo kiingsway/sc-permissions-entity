@@ -1,4 +1,7 @@
 import React from 'react'
+import Table from '../../../themes/Table';
+import { v4 as uuidv4 } from 'uuid';
+import styles from './ReportTable.module.scss';
 
 interface Props {
   relatorio: IItemReport[];
@@ -8,34 +11,58 @@ interface Props {
 export default function ReportTable({ relatorio }: Props) {
   const idsDefinicao = relatorio.map(i => i.IdDefinicao).filter(onlyUnique)
 
-
   return (
-    <table>
+    <Table>
       <Cols />
+      <tbody>
+
         {idsDefinicao.map(i => {
-          relatorio.filter(d => d.IdDefinicao === i);
+          if (!i) return;
+
+          const report = relatorio.filter(d => d.IdDefinicao === i)
+
           return (
-            <tr>
-              <td rowSpan={2}>{i}</td>
-              <td>Site</td>
-              <td>Tipo da Entidade</td>
-              <td>Erro</td>
-              <td>Observações</td>
-            </tr>
+            <Frag key={i}>
+              {report.map((r, idx) => {
+
+                return (
+                  <tr key={uuidv4()} className={idx !== report.length - 1 ? styles.no_border_row : undefined}>
+                    {idx === 0 ? <td rowSpan={report.length}>{i}</td> : null}
+                    {idx === 0 ? <td rowSpan={report.length}>{r.Site}</td> : null}
+                    {idx === 0 ? <td rowSpan={report.length}>{r.Entidade}</td> : null}
+                    <td>{r.Verificacao}</td>
+                    <td>{r.Erro ? '❌ Erro' : '✅ Ok'}</td>
+                    <td>{r.Mensagem}</td>
+                  </tr>
+                )
+              })}
+            </Frag>
           )
         })}
-    </table>
+      </tbody>
+    </Table>
+  )
+}
+
+const Frag = ({ children }: { children: any }) => {
+  return (
+    <>
+      {children}
+    </>
   )
 }
 
 const Cols = () => (
-  <tr>
-    <th>ID da Definição</th>
-    <th>Site</th>
-    <th>Tipo da Entidade</th>
-    <th>Erro</th>
-    <th>Observações</th>
-  </tr>
+  <thead>
+    <tr>
+      <th>ID da Definição</th>
+      <th>Site</th>
+      <th>Tipo da Entidade</th>
+      <th>Verificando</th>
+      <th>Status</th>
+      <th>Observações</th>
+    </tr>
+  </thead>
 )
 
 function onlyUnique(value: any, index: any, self: any) {

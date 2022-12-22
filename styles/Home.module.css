@@ -10,3 +10,11 @@
 .code {
     font-family: 'FiraCode';
 }
+
+.container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 100px;
+}

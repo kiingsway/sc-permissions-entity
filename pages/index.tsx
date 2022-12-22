@@ -1,7 +1,6 @@
 import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import sitePermissionsJson from '../mocks/sitePermissions.json';
-import belgo from '../mocks/belgo.json'
 import ReportTable from '../src/components/ReportTable';
 
 export default function Home() {
@@ -22,10 +21,13 @@ export default function Home() {
       </Head>
 
       <main className={styles.main}>
-        <pre className={styles.code}>
-          {JSON.stringify(relatorio, null, 4)}
+        <div className={styles.container}>
+
+          {/* <pre className={styles.code}>
+            {JSON.stringify(relatorio, null, 4)}
+          </pre> */}
           <ReportTable relatorio={relatorio} />
-        </pre>
+        </div>
       </main>
     </>
   )
@@ -35,6 +37,7 @@ const itemReport: IItemReport = {
   IdDefinicao: null,
   Site: null,
   Entidade: null,
+  Verificacao: null,
   HerdaPermissao: null,
   DeveriaHerdarPermissao: null,
   Lista: null,
@@ -51,32 +54,94 @@ function gerarRelatorio(itens: ISitePermission[]) {
 
   itens.forEach(item => {
 
-    final.push({
-      IdDefinicao: item.Id,
-      Site: null,
-      Entidade: null,
-      HerdaPermissao: null,
-      DeveriaHerdarPermissao: null,
-      Lista: null,
-      IdItem: null,
-      TemPermissao: null,
-      DeveriaTerPermissao: null,
-      Erro: false,
-      Mensagem: ''
-    })
+    if (item.TipoEntidade === 'Site')
+      final.push(reportInheritance(item, item.SitePermissions.HasUniqueRoleAssignments, 'Site'));
+
+    if (item.TipoEntidade === 'Lista/Biblioteca')
+      final.push(reportInheritance(item, item?.ListPermissions?.HasUniqueRoleAssignments || false, 'Lista'));
+
   })
 
   return final;
 }
 
-
+function getRandomInt(max: number) {
+  return Math.floor(Math.random() * max);
+}
 
 function checkSitePerm(perm: ISitePermission) {
 
-  let finalReport = itemReport;
-  finalReport.IdDefinicao = perm.Id;
-  finalReport.Site = perm.URLSite.Title;
-  finalReport.Entidade = perm.TipoEntidade;
+  const HerdaPermissao = !perm.SitePermissions.HasUniqueRoleAssignments;
+  const DeveriaHerdarPermissao = perm.HerdaPermissoesPai;
 
-  return finalReport
+  const Erro = HerdaPermissao !== DeveriaHerdarPermissao && perm.SitePermissions.ParentWeb;
+
+  const Mensagem = () => {
+    if (!Erro) return null;
+
+    const herdaTxt = "herdando permissões do pai"
+    const unicasTxt = "com permissões únicas"
+    const herdaCond = HerdaPermissao ? herdaTxt : unicasTxt;
+    const deveriaCond = DeveriaHerdarPermissao ? herdaTxt : unicasTxt;
+
+    return (
+      <>Site está {herdaCond} enquanto foi definido que ele deveria estar {deveriaCond}.</>
+    )
+  }
+
+  return {
+    IdDefinicao: perm.Id,
+    Site: perm.URLSite.Title,
+    Entidade: perm.TipoEntidade,
+    Verificacao: 'Herança da permissão',
+    HerdaPermissao,
+    DeveriaHerdarPermissao,
+    Lista: null,
+    IdItem: null,
+    TemPermissao: null,
+    DeveriaTerPermissao: null,
+    Erro,
+    Mensagem: <Mensagem />
+  }
+}
+
+function reportInheritance(perm: ISitePermission, hasUniqueRoleAssignments: boolean, type: string) {
+
+  const HerdaPermissao = !hasUniqueRoleAssignments;
+  const DeveriaHerdarPermissao = perm.HerdaPermissoesPai;
+
+  let Erro = true;
+  if (perm.TipoEntidade === 'Site') Erro = HerdaPermissao !== DeveriaHerdarPermissao && perm.SitePermissions.ParentWeb;
+  else {
+    Erro = HerdaPermissao !== DeveriaHerdarPermissao
+  }
+
+  const Mensagem = () => {
+    if (!Erro) return null;
+
+    const herdaTxt = "herdando permissões do pai"
+    const unicasTxt = "com permissões únicas"
+    const herdaCond = HerdaPermissao ? herdaTxt : unicasTxt;
+    const deveriaCond = DeveriaHerdarPermissao ? herdaTxt : unicasTxt;
+
+    return (
+      <>{type} está {herdaCond} enquanto foi definido que ele deveria estar {deveriaCond}.</>
+    )
+  }
+
+  return {
+    IdDefinicao: perm.Id,
+    Site: perm.URLSite.Title,
+    Entidade: perm.TipoEntidade,
+    Verificacao: 'Herança da permissão',
+    HerdaPermissao,
+    DeveriaHerdarPermissao,
+    Lista: null,
+    IdItem: null,
+    TemPermissao: null,
+    DeveriaTerPermissao: null,
+    Erro,
+    Mensagem: <Mensagem />
+  }
+
 }

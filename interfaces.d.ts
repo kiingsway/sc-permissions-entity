@@ -21,12 +21,13 @@ interface ISitePermission {
   ComplianceAssetId: any
   TipoEntidade: string
   HerdaPermissoesPai: boolean
-  OData__x0041_D00Id: Array<number>
-  MembrosSiteId: number
-  xxxxId: number
+  OData__x0041_D00Id: any
+  MembrosSiteId: any
+  xxxxId: any
   ListaBibliotecaId: any
   MetodoLocalizacaoItem: any
   SitePermissions: {
+    ParentWeb: any;
     RoleAssignments: Array<{
       Member: {
         Users?: Array<{
@@ -88,14 +89,56 @@ interface ISitePermission {
     }>
     HasUniqueRoleAssignments: boolean
   }
-  ListPermissions: any
+  ListPermissions: IListPermission | null;
   ItemPermissions: any
+}
+
+interface IListPermission {
+  RoleAssignments: Array<{
+    Member: {
+      Users: Array<{
+        Id: number
+        IsHiddenInUI: boolean
+        LoginName: string
+        Title: string
+        PrincipalType: number
+        Email: string
+        Expiration: string
+        IsEmailAuthenticationGuestUser: boolean
+        IsShareByEmailGuestUser: boolean
+        IsSiteAdmin: boolean
+        UserId: {
+          NameId: string
+          NameIdIssuer: string
+        }
+        UserPrincipalName: string
+      }>
+      Id: number
+      IsHiddenInUI: boolean
+      LoginName: string
+      Title: string
+      PrincipalType: number
+      AllowMembersEditMembership: boolean
+      AllowRequestToJoinLeave: boolean
+      AutoAcceptRequestToJoinLeave: boolean
+      Description: string
+      OnlyAllowMembersViewMembership: boolean
+      OwnerTitle: string
+      RequestToJoinLeaveEmailSetting: any
+    }
+    RoleDefinitionBindings: Array<{
+      Id: number
+      Name: string
+    }>
+  }>
+  HasUniqueRoleAssignments: boolean
 }
 
 interface IItemReport {
   IdDefinicao: null | number;
   Site: null | string;
   Entidade: null | string;
+  Verificacao: null | string;
   HerdaPermissao: null | boolean;
   DeveriaHerdarPermissao: null | boolean;
   Lista: null | string;
@@ -103,5 +146,5 @@ interface IItemReport {
   TemPermissao: null | boolean;
   DeveriaTerPermissao: null | boolean;
   Erro: boolean;
-  Mensagem: null | string;
+  Mensagem: string | JSX.Element | null;
 }
