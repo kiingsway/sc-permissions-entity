@@ -30,6 +30,7 @@ export default function ReportTable({ relatorio }: Props) {
                     {idx === 0 ? <td rowSpan={report.length}>{i}</td> : null}
                     {idx === 0 ? <td rowSpan={report.length}>{r.Site}</td> : null}
                     {idx === 0 ? <td rowSpan={report.length}>{r.Entidade}</td> : null}
+                    {idx === 0 ? <td rowSpan={report.length}>{r.NomeEntidade}</td> : null}
                     <td>{r.Verificacao}</td>
                     <td>{r.Erro ? '❌ Erro' : '✅ Ok'}</td>
                     <td>{r.Mensagem}</td>
@@ -58,6 +59,7 @@ const Cols = () => (
       <th>ID da Definição</th>
       <th>Site</th>
       <th>Tipo da Entidade</th>
+      <th>Nome da Entidade</th>
       <th>Verificando</th>
       <th>Status</th>
       <th>Observações</th>

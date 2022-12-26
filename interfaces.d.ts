@@ -1,4 +1,4 @@
-interface ISitePermission {
+interface ISiteDefinition {
   URLSite: {
     Title: string
   }
@@ -26,71 +26,90 @@ interface ISitePermission {
   xxxxId: any
   ListaBibliotecaId: any
   MetodoLocalizacaoItem: any
-  SitePermissions: {
-    ParentWeb: any;
-    RoleAssignments: Array<{
-      Member: {
-        Users?: Array<{
-          Id: number
-          IsHiddenInUI: boolean
-          LoginName: string
-          Title: string
-          PrincipalType: number
-          Email: string
-          Expiration: string
-          IsEmailAuthenticationGuestUser: boolean
-          IsShareByEmailGuestUser: boolean
-          IsSiteAdmin: boolean
-          UserId: {
-            NameId: string
-            NameIdIssuer: string
-          }
-          UserPrincipalName: string
-        }>
+  SitePermissions: ISitePermissions;
+  ListPermissions: IListPermission | null;
+  ItemPermissions: any
+  ListaBiblioteca?: { Title: string } | null;
+}
+
+interface IFieldGroup {
+  Description: string
+  EntityPropertyName: string
+  Title: string
+  LookupList: string
+}
+
+interface IPreData {
+  sitePermissions: ISiteDefinition[];
+  fieldGroups: IFieldGroup[];
+  roleAssignments: IRoleAssignments;
+}
+
+type IRoleAssignments = Record<string, string>;
+
+interface ISitePermissions {
+  ParentWeb: any;
+  RoleAssignments: Array<{
+    Member: {
+      Users?: Array<{
         Id: number
         IsHiddenInUI: boolean
         LoginName: string
         Title: string
         PrincipalType: number
-        AllowMembersEditMembership?: boolean
-        AllowRequestToJoinLeave?: boolean
-        AutoAcceptRequestToJoinLeave?: boolean
-        Description?: string
-        OnlyAllowMembersViewMembership?: boolean
-        OwnerTitle?: string
-        RequestToJoinLeaveEmailSetting?: string
-        Email?: string
-        Expiration?: string
-        IsEmailAuthenticationGuestUser?: boolean
-        IsShareByEmailGuestUser?: boolean
-        IsSiteAdmin?: boolean
-        UserId?: {
+        Email: string
+        Expiration: string
+        IsEmailAuthenticationGuestUser: boolean
+        IsShareByEmailGuestUser: boolean
+        IsSiteAdmin: boolean
+        UserId: {
           NameId: string
           NameIdIssuer: string
         }
-        UserPrincipalName?: string
-      }
-      RoleDefinitionBindings: Array<{
-        Id: number
-        Name: string
+        UserPrincipalName: string
       }>
-    }>
-    RoleDefinitions: Array<{
-      BasePermissions: {
-        High: string
-        Low: string
-      }
+      Id: number
+      IsHiddenInUI: boolean
+      LoginName: string
+      Title: string
+      PrincipalType: number
+      AllowMembersEditMembership?: boolean
+      AllowRequestToJoinLeave?: boolean
+      AutoAcceptRequestToJoinLeave?: boolean
       Description?: string
-      Hidden: boolean
+      OnlyAllowMembersViewMembership?: boolean
+      OwnerTitle?: string
+      RequestToJoinLeaveEmailSetting?: string
+      Email?: string
+      Expiration?: string
+      IsEmailAuthenticationGuestUser?: boolean
+      IsShareByEmailGuestUser?: boolean
+      IsSiteAdmin?: boolean
+      UserId?: {
+        NameId: string
+        NameIdIssuer: string
+      }
+      UserPrincipalName?: string
+    }
+    RoleDefinitionBindings: Array<{
       Id: number
       Name: string
-      Order: number
-      RoleTypeKind: number
     }>
-    HasUniqueRoleAssignments: boolean
-  }
-  ListPermissions: IListPermission | null;
-  ItemPermissions: any
+  }>
+  RoleDefinitions: Array<{
+    BasePermissions: {
+      High: string
+      Low: string
+    }
+    Description?: string
+    Hidden: boolean
+    Id: number
+    Name: string
+    Order: number
+    RoleTypeKind: number
+  }>
+  HasUniqueRoleAssignments: boolean
+  ServerRelativeUrl: string
 }
 
 interface IListPermission {
@@ -138,6 +157,7 @@ interface IItemReport {
   IdDefinicao: null | number;
   Site: null | string;
   Entidade: null | string;
+  NomeEntidade: null | string;
   Verificacao: null | string;
   HerdaPermissao: null | boolean;
   DeveriaHerdarPermissao: null | boolean;
