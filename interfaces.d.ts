@@ -81,8 +81,8 @@ interface IItemReport {
   DeveriaHerdarPermissao: null | boolean;
   Lista: null | string;
   IdItem: null | string | number;
-  TemPermissao: null | boolean;
-  DeveriaTerPermissao: null | boolean;
+  TemPermissao: null | string;
+  DeveriaTerPermissao: null | string;
   Erro: boolean;
   Mensagem: string | JSX.Element | null;
 }
@@ -134,4 +134,39 @@ interface IRoleAssignmentUser {
 interface IRoleDefinitionBinding {
   Id: number
   Name: string
+}
+
+interface IPermissions {
+  RoleAssignments: IRoleAssignment[];
+  RoleDefinitions?: IRoleDefinition[];
+  HasUniqueRoleAssignments: boolean
+  ServerRelativeUrl?: string
+  ParentWeb?: IParentWeb;
+}
+
+interface IRoleDefinition {
+  BasePermissions: {
+    High: string
+    Low: string
+  }
+  Description?: string
+  Hidden: boolean
+  Id: number
+  Name: string
+  Order: number
+  RoleTypeKind: number
+}
+
+interface IParentWeb {
+  Configuration: number
+  Created: string
+  Description: string
+  Id: string
+  Language: number
+  LastItemModifiedDate: string
+  LastItemUserModifiedDate: string
+  ServerRelativeUrl: string
+  Title: string
+  WebTemplate: string
+  WebTemplateId: number
 }

@@ -5,11 +5,10 @@ import styles from './ReportTable.module.scss';
 
 interface Props {
   relatorio: IItemReport[];
-
 }
 
 export default function ReportTable({ relatorio }: Props) {
-  const idsDefinicao = relatorio.map(i => i.IdDefinicao).filter(onlyUnique)
+  const idsDefinicao = relatorio.map(i => i.IdDefinicao).filter(onlyUnique).filter(i => Boolean(i));
 
   return (
     <Table>
@@ -17,10 +16,8 @@ export default function ReportTable({ relatorio }: Props) {
       <tbody>
 
         {idsDefinicao.map(i => {
-          if (!i) return;
 
-          const report = relatorio.filter(d => d.IdDefinicao === i)
-
+          const report = relatorio.filter(d => d.IdDefinicao === i);
           return (
             <Frag key={i}>
               {report.map((r, idx) => {
@@ -34,6 +31,8 @@ export default function ReportTable({ relatorio }: Props) {
                     <td>{r.Verificacao}</td>
                     <td>{r.Erro ? '❌ Erro' : '✅ Ok'}</td>
                     <td>{r.Mensagem}</td>
+                    <td>{r.TemPermissao}</td>
+                    <td>{r.DeveriaTerPermissao}</td>
                   </tr>
                 )
               })}
@@ -63,6 +62,8 @@ const Cols = () => (
       <th>Verificando</th>
       <th>Status</th>
       <th>Observações</th>
+      <th>Permissão atual</th>
+      <th>Permissão que deveria ter</th>
     </tr>
   </thead>
 )
