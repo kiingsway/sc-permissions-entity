@@ -42,60 +42,14 @@ interface IFieldGroup {
 interface IPreData {
   sitePermissions: ISiteDefinition[];
   fieldGroups: IFieldGroup[];
-  roleAssignments: IRoleAssignments;
+  roleAssignments: IRoleAssignmentsList;
 }
 
-type IRoleAssignments = Record<string, string>;
+type IRoleAssignmentsList = Record<string, string>;
 
 interface ISitePermissions {
   ParentWeb: any;
-  RoleAssignments: Array<{
-    Member: {
-      Users?: Array<{
-        Id: number
-        IsHiddenInUI: boolean
-        LoginName: string
-        Title: string
-        PrincipalType: number
-        Email: string
-        Expiration: string
-        IsEmailAuthenticationGuestUser: boolean
-        IsShareByEmailGuestUser: boolean
-        IsSiteAdmin: boolean
-        UserId: {
-          NameId: string
-          NameIdIssuer: string
-        }
-        UserPrincipalName: string
-      }>
-      Id: number
-      IsHiddenInUI: boolean
-      LoginName: string
-      Title: string
-      PrincipalType: number
-      AllowMembersEditMembership?: boolean
-      AllowRequestToJoinLeave?: boolean
-      AutoAcceptRequestToJoinLeave?: boolean
-      Description?: string
-      OnlyAllowMembersViewMembership?: boolean
-      OwnerTitle?: string
-      RequestToJoinLeaveEmailSetting?: string
-      Email?: string
-      Expiration?: string
-      IsEmailAuthenticationGuestUser?: boolean
-      IsShareByEmailGuestUser?: boolean
-      IsSiteAdmin?: boolean
-      UserId?: {
-        NameId: string
-        NameIdIssuer: string
-      }
-      UserPrincipalName?: string
-    }
-    RoleDefinitionBindings: Array<{
-      Id: number
-      Name: string
-    }>
-  }>
+  RoleAssignments: IRoleAssignment[];
   RoleDefinitions: Array<{
     BasePermissions: {
       High: string
@@ -113,43 +67,7 @@ interface ISitePermissions {
 }
 
 interface IListPermission {
-  RoleAssignments: Array<{
-    Member: {
-      Users: Array<{
-        Id: number
-        IsHiddenInUI: boolean
-        LoginName: string
-        Title: string
-        PrincipalType: number
-        Email: string
-        Expiration: string
-        IsEmailAuthenticationGuestUser: boolean
-        IsShareByEmailGuestUser: boolean
-        IsSiteAdmin: boolean
-        UserId: {
-          NameId: string
-          NameIdIssuer: string
-        }
-        UserPrincipalName: string
-      }>
-      Id: number
-      IsHiddenInUI: boolean
-      LoginName: string
-      Title: string
-      PrincipalType: number
-      AllowMembersEditMembership: boolean
-      AllowRequestToJoinLeave: boolean
-      AutoAcceptRequestToJoinLeave: boolean
-      Description: string
-      OnlyAllowMembersViewMembership: boolean
-      OwnerTitle: string
-      RequestToJoinLeaveEmailSetting: any
-    }
-    RoleDefinitionBindings: Array<{
-      Id: number
-      Name: string
-    }>
-  }>
+  RoleAssignments: IRoleAssignment[];
   HasUniqueRoleAssignments: boolean
 }
 
@@ -167,4 +85,53 @@ interface IItemReport {
   DeveriaTerPermissao: null | boolean;
   Erro: boolean;
   Mensagem: string | JSX.Element | null;
+}
+
+interface IRoleAssignment {
+  Member: {
+    Users?: IRoleAssignmentUser[];
+    Id: number
+    IsHiddenInUI: boolean
+    LoginName: string
+    Title: string
+    PrincipalType: number
+    AllowMembersEditMembership?: boolean
+    AllowRequestToJoinLeave?: boolean
+    AutoAcceptRequestToJoinLeave?: boolean
+    Description?: string
+    OnlyAllowMembersViewMembership?: boolean
+    OwnerTitle?: string
+    RequestToJoinLeaveEmailSetting?: string
+    Email?: string
+    Expiration?: string
+    IsEmailAuthenticationGuestUser?: boolean
+    IsShareByEmailGuestUser?: boolean
+    IsSiteAdmin?: boolean
+    UserId?: any
+    UserPrincipalName?: string
+  }
+  RoleDefinitionBindings: IRoleDefinitionBinding[]
+}
+
+interface IRoleAssignmentUser {
+  Id: number
+  IsHiddenInUI: boolean
+  LoginName: string
+  Title: string
+  PrincipalType: number
+  Email: string
+  Expiration: string
+  IsEmailAuthenticationGuestUser: boolean
+  IsShareByEmailGuestUser: boolean
+  IsSiteAdmin: boolean
+  UserId?: {
+    NameId: string
+    NameIdIssuer: string
+  }
+  UserPrincipalName?: string
+}
+
+interface IRoleDefinitionBinding {
+  Id: number
+  Name: string
 }

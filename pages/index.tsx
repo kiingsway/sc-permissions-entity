@@ -2,6 +2,7 @@ import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import ReportTable from '../src/components/ReportTable';
 import { Permission, fieldGroupsList, roleAssignmentsList } from '../mocks/sitePermDefinition';
+import { consoleGroup, getNomeEntidade, getRoleIdsAndNames, isSameArray, joinAnd } from '../src/components/helpers';
 
 enum TipoEntidade {
   Site = "Site",
@@ -14,7 +15,7 @@ export default function Home() {
   const preData = {
     sitePermissions: Permission as ISiteDefinition[],
     fieldGroups: fieldGroupsList as IFieldGroup[],
-    roleAssignments: roleAssignmentsList as IRoleAssignments,
+    roleAssignments: roleAssignmentsList as IRoleAssignmentsList,
   }
 
   const relatorio = gerarRelatorio(preData);
@@ -50,6 +51,7 @@ function gerarRelatorio(preData: IPreData) {
 
         if (item?.SitePermissions?.ParentWeb)
           report.push(reportInheritance(item, item.SitePermissions.HasUniqueRoleAssignments));
+
         report = report.concat(reportPermissions(item, preData));
       }
 
@@ -100,23 +102,21 @@ function reportInheritance(perm: ISiteDefinition, hasUniqueRoleAssignments: bool
   const HerdaPermissao = !hasUniqueRoleAssignments;
   const DeveriaHerdarPermissao = perm.HerdaPermissoesPai;
 
-  let Erro = true;
-  if (perm.TipoEntidade === TipoEntidade.Site) Erro = HerdaPermissao !== DeveriaHerdarPermissao && perm.SitePermissions.ParentWeb;
-  else {
-    Erro = HerdaPermissao !== DeveriaHerdarPermissao
+  const Erro = perm.TipoEntidade === TipoEntidade.Site ?
+    HerdaPermissao !== DeveriaHerdarPermissao && Boolean(perm.SitePermissions.ParentWeb) :
+    HerdaPermissao !== DeveriaHerdarPermissao;
+
+  enum txt {
+    herda = "herdando permissões do pai",
+    unica = "com permissões exclusivas"
   }
 
-  const Mensagem = () => {
-    if (!Erro) return null;
-
-    const herdaTxt = "herdando permissões do pai"
-    const unicasTxt = "com permissões exclusivas"
-    const herdaCond = HerdaPermissao ? herdaTxt : unicasTxt;
-    const deveriaCond = DeveriaHerdarPermissao ? herdaTxt : unicasTxt;
-
-    return <>{perm.TipoEntidade} está {herdaCond} e não deveria. O correto é estar {deveriaCond}.</>
-
+  const cond = {
+    herda: HerdaPermissao ? txt.herda : txt.unica,
+    deveria: DeveriaHerdarPermissao ? txt.herda : txt.unica
   }
+
+  const Mensagem = Erro ? `${perm.TipoEntidade} está ${cond.herda} e não deveria. O correto é estar ${cond.deveria}.` : null;
 
   return {
     IdDefinicao: perm.Id,
@@ -131,7 +131,7 @@ function reportInheritance(perm: ISiteDefinition, hasUniqueRoleAssignments: bool
     TemPermissao: null,
     DeveriaTerPermissao: null,
     Erro,
-    Mensagem: <Mensagem />
+    Mensagem
   }
 
 }
@@ -139,6 +139,7 @@ function reportInheritance(perm: ISiteDefinition, hasUniqueRoleAssignments: bool
 function reportPermissions(perm: ISiteDefinition, preData: IPreData) {
 
   let reports: IItemReport[] = [];
+
   const report: IItemReport = {
     IdDefinicao: perm.Id,
     Site: perm.URLSite.Title,
@@ -159,60 +160,44 @@ function reportPermissions(perm: ISiteDefinition, preData: IPreData) {
 
   const groups = getRoleIdsAndNames(preData, perm);
 
-  if (perm.TipoEntidade === TipoEntidade.Site) {
+  const RoleAss = {
+    [`${TipoEntidade.Site}`]: perm.SitePermissions.RoleAssignments,
+    [`${TipoEntidade.Lista}`]: perm?.ListPermissions?.RoleAssignments,
+  }
+  const Role = RoleAss[perm.TipoEntidade];
+  const RoleAssignments: any[] = Array.isArray(Role) && Role && Role?.length ? Role : [];
 
-    /**
-     * Verificar se grupo da definição está preenchido.
-     * Caso não esteja preenchido, verificar se esse grupo possui permissão no site.
-     * Caso possuir, enviar um erro pelo grupo da definição não ter nada preenchido e no site o grupo possui permissões.
-     * Caso grupo não possuir permissão no site, enviar mensagem de sucesso
-     * Caso na definição esteja preenchido, verificar se grupo possui permissão no site.
-     * Caso possua, verificar se os níveis de permissões setados para ele no site estão iguais da definição.
-     * Caso não possua permissão no site ou os níveis de permissões setados estejam diferentes, enviar um erro.
-     * 
-     * Verificar também se o número de permissionados do site é igual da definição preenchida.
-     * Caso não, enviar erro de que tem mais grupo permissionado do que a quantidade de colunas de grupos da definição
-     */
+  const groupReports = groups.map(g => {
+    const permOnSite: IRoleAssignment = RoleAssignments.filter(r => r.Member.Title === g.Title)[0];
+    const permOnSiteNames = permOnSite ? permOnSite.RoleDefinitionBindings.filter(r => r.Name !== "Acesso Limitado").map(r => r.Name).sort() : null
+    const permOnSiteIds = permOnSite ? permOnSite.RoleDefinitionBindings.filter(r => r.Name !== "Acesso Limitado").map(r => r.Id).sort() : null
 
-    const r = groups.map(g => {
-      const permOnSite = perm.SitePermissions.RoleAssignments.filter(r => r.Member.Title === g.Title)[0];
-      const permOnSiteNames = permOnSite ? permOnSite.RoleDefinitionBindings.filter(r => r.Name !== "Acesso Limitado").map(r => r.Name).sort() : null
-      const permOnSiteIds = permOnSite ? permOnSite.RoleDefinitionBindings.filter(r => r.Name !== "Acesso Limitado").map(r => r.Id).sort() : null
-
-      // Verificar se grupo da definição está preenchido.
-      if (g.RoleIds && g.RoleIds.length) {
-        // Caso na definição esteja preenchido, verificar se grupo possui permissão no site.
-        if (permOnSite) {
-          // Caso possua, verificar se os níveis de permissões setados para ele no site estão iguais da definição.
-          const Erro = !isSameArray(g?.RoleIds, permOnSiteIds);
-          // Caso não possua permissão no site ou os níveis de permissões setados estejam diferentes, enviar um erro.
-          const Mensagem = Erro ? `Grupo não possui as mesmas permissões no site. Deveria ter as permissões: ${g.RoleNames?.join(', ')}. Mas possui: ${permOnSiteNames?.join(', ')}` : "";
-
-          return {
-            ...report,
-            Mensagem,
-            Erro,
-            Verificacao: `Grupo: "${g.Title}"`,
-          };
-
-        } else {
-          // Caso não possua permissão no site ou os níveis de permissões setados estejam diferentes, enviar um erro.
-          const Erro = !Boolean(permOnSite);
-          const Mensagem = Erro ? `Grupo não encontrado no site.` : "";
-
-          return {
-            ...report,
-            Verificacao: `Grupo: "${g.Title}"`,
-            Erro,
-            Mensagem
-          };
+    // Verificar se grupo da definição está preenchido.
+    if (g.RoleIds && g.RoleIds.length) {
+      // Caso na definição esteja preenchido, verificar se grupo possui permissão no site.
+      if (permOnSite) {
+        // Caso possua, verificar se os níveis de permissões setados para ele no site estão iguais da definição.
+        const Erro = !isSameArray(g?.RoleIds, permOnSiteIds);
+        if(Erro) {
+          console.group('erro');
+          consoleGroup('g?.RoleIds', g)
+          consoleGroup('permOnSiteIds', permOnSiteIds)
+          console.groupEnd();
         }
+        // Caso não possua permissão no site ou os níveis de permissões setados estejam diferentes, enviar um erro.
+        const Mensagem = Erro ? `Grupo não possui as mesmas permissões no site. Deveria ter as permissões: ${joinAnd(g.RoleNames)}. Mas possui: ${joinAnd(permOnSiteNames)}` : "";
+
+        return {
+          ...report,
+          Mensagem,
+          Erro,
+          Verificacao: `Grupo: "${g.Title}"`,
+        };
+
       } else {
-        // Caso o grupo da definição não esteja preenchido, verificar se esse grupo possui permissão no site.
-        const Erro = Boolean(permOnSite);
-        // Caso possuir, enviar um erro pelo grupo da definição não ter nada preenchido e no site o grupo possui permissões.
-        // Caso grupo não possuir permissão no site, enviar mensagem de sucesso
-        const Mensagem = Erro ? `O grupo está definido para não ter nenhuma permissão, entretanto o site possui permissão para esse grupo. As permissões: ${permOnSiteNames?.join(', ')}.` : "O grupo não possui permissão no site";
+        // Caso não possua permissão no site ou os níveis de permissões setados estejam diferentes, enviar um erro.
+        const Erro = !Boolean(permOnSite);
+        const Mensagem = Erro ? `Grupo não encontrado no site.` : "";
 
         return {
           ...report,
@@ -221,131 +206,38 @@ function reportPermissions(perm: ISiteDefinition, preData: IPreData) {
           Mensagem
         };
       }
-
-    });
-
-    const qtdPermissoesDefinidas = groups.filter(g => g.RoleSpIds).length;
-    const qtdPermissoesNoSite = perm.SitePermissions.RoleAssignments.length;
-
-    if (qtdPermissoesDefinidas !== qtdPermissoesNoSite) {
-      reports.push({
+    }
+    // Caso não esteja preenchido, verificar permissões no site.
+    else {
+      const Erro = Boolean(permOnSite);
+      const Mensagem = Erro ? `O grupo está definido para não ter nenhuma permissão, entretanto o site possui permissão para esse grupo. As permissões: ${joinAnd(permOnSiteNames)}.` : "O grupo não possui permissão no site";
+      return {
         ...report,
-        Erro: true,
-        Verificacao: "Grupos do site",
-        Mensagem: `O site possui permissões para grupos que não estão definidos nas colunas. Quantidade de colunas de grupos definidas: ${qtdPermissoesDefinidas}. Quantidade de permissões no site: ${qtdPermissoesNoSite}`
-      })
+        Verificacao: `Grupo: "${g.Title}"`,
+        Erro,
+        Mensagem
+      };
     }
 
-    reports = reports.concat(r);
+  });
 
+  const qtdPermissoesDefinidas = groups.filter(g => g.RoleSpIds).length;
+  const qtdPermissoesNaEntidade = RoleAssignments.length;
+
+  console.group(perm.Title)
+  consoleGroup('RoleAssignments', RoleAssignments)
+  console.groupEnd();
+
+  if (qtdPermissoesDefinidas !== qtdPermissoesNaEntidade) {
+    reports.push({
+      ...report,
+      Erro: true,
+      Verificacao: "Quantidade de permissões na entidade",
+      Mensagem: `O site possui permissões para grupos que não estão definidos nas colunas. Quantidade de colunas de grupos definidas: ${qtdPermissoesDefinidas}. Quantidade de permissões no site: ${qtdPermissoesNaEntidade}`
+    })
   }
-  if (perm.TipoEntidade === TipoEntidade.Lista) {
 
-    const r = groups.map(g => {
-      const permOnSite = perm.ListPermissions?.RoleAssignments.filter(r => r.Member.Title === g.Title)[0];
-      const permOnSiteNames = permOnSite ? permOnSite.RoleDefinitionBindings.filter(r => r.Name !== "Acesso Limitado").map(r => r.Name).sort() : null
-      const permOnSiteIds = permOnSite ? permOnSite.RoleDefinitionBindings.filter(r => r.Name !== "Acesso Limitado").map(r => r.Id).sort() : null
-
-      // Verificar se grupo da definição está preenchido.
-      if (g.RoleIds && g.RoleIds.length) {
-        // Caso na definição esteja preenchido, verificar se grupo possui permissão no site.
-        if (permOnSite) {
-          // Caso possua, verificar se os níveis de permissões setados para ele no site estão iguais da definição.
-          const Erro = !isSameArray(g?.RoleIds, permOnSiteIds);
-          // Caso não possua permissão no site ou os níveis de permissões setados estejam diferentes, enviar um erro.
-          const Mensagem = Erro ? `Grupo não possui as mesmas permissões no site. Deveria ter as permissões: ${g.RoleNames?.join(', ')}. Mas possui: ${permOnSiteNames?.join(', ')}` : "";
-
-          return {
-            ...report,
-            Mensagem,
-            Erro,
-            Verificacao: `Grupo: "${g.Title}"`,
-          };
-
-        } else {
-          // Caso não possua permissão no site ou os níveis de permissões setados estejam diferentes, enviar um erro.
-          const Erro = !Boolean(permOnSite);
-          const Mensagem = Erro ? `Grupo não encontrado no site.` : "";
-
-          return {
-            ...report,
-            Verificacao: `Grupo: "${g.Title}"`,
-            Erro,
-            Mensagem
-          };
-        }
-      } else {
-        // Caso o grupo da definição não esteja preenchido, verificar se esse grupo possui permissão no site.
-        const Erro = Boolean(permOnSite);
-        // Caso possuir, enviar um erro pelo grupo da definição não ter nada preenchido e no site o grupo possui permissões.
-        // Caso grupo não possuir permissão no site, enviar mensagem de sucesso
-        const Mensagem = Erro ? `O grupo está definido para não ter nenhuma permissão, entretanto o site possui permissão para esse grupo. As permissões: ${permOnSiteNames?.join(', ')}.` : "O grupo não possui permissão no site";
-
-        return {
-          ...report,
-          Verificacao: `Grupo: "${g.Title}"`,
-          Erro,
-          Mensagem
-        };
-      }
-
-    });
-
-    const qtdPermissoesDefinidas = groups.filter(g => g.RoleSpIds).length;
-    const qtdPermissoesNoSite = perm.ListPermissions?.RoleAssignments.length;
-
-    if (qtdPermissoesDefinidas !== qtdPermissoesNoSite) {
-      reports.push({
-        ...report,
-        Erro: true,
-        Verificacao: "Grupos do site",
-        Mensagem: `O site possui permissões para grupos que não estão definidos nas colunas. Quantidade de colunas de grupos definidas: ${qtdPermissoesDefinidas}. Quantidade de permissões no site: ${qtdPermissoesNoSite}`
-      })
-    }
-
-    reports = reports.concat(r);
-  }
+  reports = reports.concat(groupReports);
 
   return reports
-}
-
-function getNomeEntidade(perm: ISiteDefinition) {
-
-  let NomeEntidade = "";
-  if (perm.TipoEntidade === TipoEntidade.Site)
-    NomeEntidade = perm?.SitePermissions.ServerRelativeUrl
-  if (perm.TipoEntidade === TipoEntidade.Lista)
-    NomeEntidade = perm?.ListaBiblioteca?.Title || ''
-
-  return NomeEntidade;
-}
-
-function getRoleIdsAndNames(preData: IPreData, perm: ISiteDefinition) {
-
-  const RoleDefinitions: any[] = perm.TipoEntidade === TipoEntidade.Site && perm.SitePermissions.RoleDefinitions ? perm.SitePermissions.RoleDefinitions : (perm.TipoEntidade === TipoEntidade.Lista && perm?.ListPermissions?.RoleAssignments ? perm?.ListPermissions?.RoleAssignments : [])
-
-  return preData.fieldGroups.map(g => {
-
-    let fieldSpId = perm[`${g.EntityPropertyName}Id` as keyof typeof perm];
-    const roleDefSpIds: number[] | null = Boolean(fieldSpId) && fieldSpId.length ? (Number.isInteger(fieldSpId) ? [fieldSpId].sort() : fieldSpId.sort()) : null
-    const roleDefNames: string[] | null = roleDefSpIds ? roleDefSpIds.map((id: number) => preData.roleAssignments[id]).sort() : null;
-    const roleDefIds = roleDefNames ? roleDefNames.map(r => RoleDefinitions.filter(d => d.Name === r)[0].Id).sort() : null;
-
-    return {
-      Title: g.Title,
-      RoleSpIds: roleDefSpIds,
-      RoleNames: roleDefNames,
-      RoleIds: roleDefIds,
-    }
-  })
-}
-
-function isSameArray(array1: any, array2: any) {
-
-  if (!Array.isArray(array1) || !Array.isArray(array2)) return false
-
-  const array2Sorted = array2.slice().sort();
-  return array1.length === array2.length && array1.slice().sort().every(function (value, index) {
-    return value === array2Sorted[index];
-  });
 }
