@@ -1,5 +1,5 @@
 import React from 'react'
-import Table from '../../../themes/Table';
+import { SCTable, Table } from '../../../themes/Table';
 import { v4 as uuidv4 } from 'uuid';
 import styles from './ReportTable.module.scss';
 
@@ -11,7 +11,7 @@ export default function ReportTable({ relatorio }: Props) {
   const idsDefinicao = relatorio.map(i => i.IdDefinicao).filter(onlyUnique).filter(i => Boolean(i));
 
   return (
-    <Table>
+    <SCTable>
       <Cols />
       <tbody>
 
@@ -40,7 +40,7 @@ export default function ReportTable({ relatorio }: Props) {
           )
         })}
       </tbody>
-    </Table>
+    </SCTable>
   )
 }
 
