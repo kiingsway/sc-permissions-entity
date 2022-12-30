@@ -102,7 +102,7 @@ function reportInheritance(perm: ISiteDefinition, hasUniqueRoleAssignments: bool
   }
 
   let Mensagem = Erro ? `${perm.TipoEntidade} está ${cond.herda} e não deveria. O correto é estar ${cond.deveria}.` : null;
-  if(!Erro && !Boolean(perm.SitePermissions?.ParentWeb) && perm.TipoEntidade === TipoEntidade.Site) Mensagem = 'Não será necessário verificar herança de permissões pois essa entidade já é a entidade máxima (site)'
+  if (!Erro && !Boolean(perm.SitePermissions?.ParentWeb) && perm.TipoEntidade === TipoEntidade.Site) Mensagem = 'Não será necessário verificar herança de permissões pois essa entidade já é a entidade máxima (site)'
 
   return {
     IdDefinicao: perm.Id,
@@ -163,7 +163,8 @@ function reportPermissions(perm: ISiteDefinition, preData: IPreData) {
   let RoleAssignments: IRoleAssignment[] = Array.isArray(Role) && Role && Role?.length ? Role : [];
   RoleAssignments = RoleAssignments.filter(r => r.RoleDefinitionBindings.filter(d => d.Name !== "Acesso Limitado" && d.Name !== "Limited Access").length);
 
-  const groupReports = groups.map(g => {
+  const groupReports: any[] = groups.map(g => {
+    
     const permOnSite: IRoleAssignment = RoleAssignments.filter(r => r.Member.Title === g.Title)[0];
     const permOnSiteNames = permOnSite ? permOnSite.RoleDefinitionBindings.filter(r => r.Name !== "Acesso Limitado").map(r => r.Name).sort() : null
     const permOnSiteIds = permOnSite ? permOnSite.RoleDefinitionBindings.filter(r => r.Name !== "Acesso Limitado").map(r => r.Id).sort() : null
@@ -175,7 +176,7 @@ function reportPermissions(perm: ISiteDefinition, preData: IPreData) {
         // Caso possua, verificar se os níveis de permissões setados para ele no site estão iguais da definição.
         const Erro = !isSameArray(g?.RoleIds, permOnSiteIds);
         // Caso não possua permissão no site ou os níveis de permissões setados estejam diferentes, enviar um erro.
-        const Mensagem = Erro ? `Grupo não possui as mesmas permissões no site. Deveria ter as permissões: ${joinAnd(g.RoleNames)}. Mas possui: ${joinAnd(permOnSiteNames)}` : "";
+        const Mensagem = Erro ? `Grupo não possui as mesmas permissões na entidade. Deveria ter as permissões: ${joinAnd(g.RoleNames)}. Mas possui: ${joinAnd(permOnSiteNames)}` : "";
 
         return {
           ...report,
@@ -189,7 +190,7 @@ function reportPermissions(perm: ISiteDefinition, preData: IPreData) {
       } else {
         // Caso não possua permissão no site ou os níveis de permissões setados estejam diferentes, enviar um erro.
         const Erro = !Boolean(permOnSite);
-        const Mensagem = Erro ? `Grupo não encontrado no site.` : "";
+        const Mensagem = Erro ? "Grupo não possui permissão na entidade." : "";
 
         return {
           ...report,
@@ -204,18 +205,19 @@ function reportPermissions(perm: ISiteDefinition, preData: IPreData) {
     // Caso não esteja preenchido, verificar permissões no site.
     else {
       const Erro = Boolean(permOnSite);
-      const Mensagem = Erro ? `O grupo está definido para não ter nenhuma permissão, entretanto o site possui permissão para esse grupo. As permissões: ${joinAnd(permOnSiteNames)}.` : "O grupo não possui permissão no site";
-      return {
+      const Mensagem = Erro ? `O grupo está definido para não ter nenhuma permissão, entretanto a entidade possui permissão para esse grupo. As permissões: ${joinAnd(permOnSiteNames)}.` : "O grupo não possui permissão na entidade";
+      if (Erro) return {
         ...report,
         Verificacao: `Grupo: "${g.Title}"`,
         Erro,
         Mensagem,
         TemPermissao: "-- nenhuma --",
         DeveriaTerPermissao: permOnSiteNames ? joinAnd(permOnSiteNames) : '-- nenhuma --',
-      };
+      }
+      else return null;
     }
 
-  });
+  }).filter(i => i !== null);
 
   const qtdPermissoesDefinidas = groups.filter(g => g.RoleSpIds).length;
   const qtdPermissoesNaEntidade = RoleAssignments.length;
@@ -225,9 +227,9 @@ function reportPermissions(perm: ISiteDefinition, preData: IPreData) {
       ...report,
       Erro: true,
       Verificacao: "Quantidade de permissões na entidade",
-      Mensagem: `O site possui permissões para grupos que não estão definidos nas colunas. Quantidade de colunas de grupos definidas: ${qtdPermissoesDefinidas}. Quantidade de permissões no site: ${qtdPermissoesNaEntidade}`,
+      Mensagem: `A entidade possui permissões para grupos que não estão definidos nas colunas. Quantidade de colunas de grupos definidas: ${qtdPermissoesDefinidas}. Quantidade de permissões na entidade: ${qtdPermissoesNaEntidade}`,
       TemPermissao: `${qtdPermissoesNaEntidade} permissões aplicadas nessa entidade`,
-      DeveriaTerPermissao: `${qtdPermissoesDefinidas} permissões na definição`,
+      DeveriaTerPermissao: `${qtdPermissoesDefinidas} permissões aplicadas na definição`,
     })
   }
 
