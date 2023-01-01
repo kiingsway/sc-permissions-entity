@@ -8,11 +8,13 @@ enum TipoEntidade {
 
 export function getNomeEntidade(perm: ISiteDefinition) {
 
+  const ListaBiblioteca = perm?.ListaBiblioteca?.Title || '';
+
   return perm.TipoEntidade === TipoEntidade.Site ?
     perm.SitePermissions.ServerRelativeUrl
     : (perm.TipoEntidade === TipoEntidade.Lista ?
-      perm?.ListaBiblioteca?.Title || ''
-      : `${(perm?.ListaBiblioteca?.Title || '')} - ${perm.MetodoLocalizacaoItem} - "${perm.Title}"`
+      ListaBiblioteca
+      : `${ListaBiblioteca} - ${perm.MetodoLocalizacaoItem} - "${perm.Title}"`
     );
 }
 
@@ -20,9 +22,9 @@ export function getRoleIdsAndNames(preData: IPreData, perm: ISiteDefinition) {
 
   return preData.fieldGroups.map(g => {
 
-    const fieldSpId = perm[`${g.EntityPropertyName}Id` as keyof typeof perm];
-    const roleDefSpIds: number[] | null = fieldSpId && (Array.isArray(fieldSpId) ? fieldSpId.length : true) ? [].concat(fieldSpId) : null
-    const roleDefNames: string[] | null = roleDefSpIds ? roleDefSpIds.map((id: number) => preData.roleAssignments[id]).sort() : null;
+    const fieldSpId: number | null = perm[`${g.EntityPropertyName}Id` as keyof typeof perm];
+    const roleDefSpIds = fieldSpId && (Array.isArray(fieldSpId) ? Boolean(fieldSpId.length) : true) ? [fieldSpId] : null
+    const roleDefNames = roleDefSpIds ? roleDefSpIds.map((id: number) => preData.roleAssignments[id]).sort() : null;
     const roleDefIds = roleDefNames ? roleDefNames.map(r => perm.SitePermissions.RoleDefinitions.filter(d => d.Name === r)[0]?.Id).sort() : null;
 
     return {

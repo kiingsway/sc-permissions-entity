@@ -19,7 +19,7 @@ interface ISiteDefinition {
   Attachments: boolean
   GUID: string
   ComplianceAssetId: any
-  TipoEntidade: string
+  TipoEntidade: "Site" | "Lista/Biblioteca" | "Pasta/Item de Lista/Biblioteca";
   HerdaPermissoesPai: boolean
   OData__x0041_D00Id: any
   MembrosSiteId: any
@@ -40,9 +40,15 @@ interface IFieldGroup {
 }
 
 interface IPreData {
-  sitePermissions: ISiteDefinition[];
+  entityPermissions: ISiteDefinition[];
   fieldGroups: IFieldGroup[];
   roleAssignments: IRoleAssignmentsList;
+}
+
+interface IPreDados {
+  permissoesEntidade: ISiteDefinition[];
+  gruposCampos: IFieldGroup[];
+  niveisPermissoes: IRoleAssignmentsList;
 }
 
 type IRoleAssignmentsList = Record<string, string>;
@@ -84,7 +90,7 @@ interface IItemReport {
   TemPermissao: null | string;
   DeveriaTerPermissao: null | string;
   Erro: boolean;
-  Mensagem: string | JSX.Element | null;
+  Mensagem: string | null;
 }
 
 interface IRoleAssignment {
@@ -137,9 +143,9 @@ interface IRoleDefinitionBinding {
 }
 
 interface IPermissions {
+  HasUniqueRoleAssignments: boolean
   RoleAssignments: IRoleAssignment[];
   RoleDefinitions?: IRoleDefinition[];
-  HasUniqueRoleAssignments: boolean
   ServerRelativeUrl?: string
   ParentWeb?: IParentWeb;
 }
