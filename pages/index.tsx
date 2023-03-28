@@ -2,6 +2,7 @@ import Head from 'next/head';
 import styles from '../styles/Home.module.css';
 import ReportTable from '../src/components/ReportTable';
 import { Permission, fieldGroupsList, roleAssignmentsList } from '../mocks/sitePermDefinition';
+import Relatorio2 from '../src/pages/Relatorio2';
 
 
 export default function Home() {
@@ -12,9 +13,9 @@ export default function Home() {
     niveisPermissoes: roleAssignmentsList as IRoleAssignmentsList,
   }
 
-  const relatorio = gerarRelatorioPermissoes(preDados);
-  const relatorioHtml = gerarRelatorioHtml(relatorio);
-  console.log(relatorioHtml);
+  // const relatorio = gerarRelatorioPermissoes(preDados);
+  // const relatorioHtml = gerarRelatorioHtml(relatorio);
+  // console.log(relatorioHtml);
 
   return (
     <>
@@ -27,10 +28,9 @@ export default function Home() {
 
       <main className={styles.main}>
         <div className={styles.container}>
-          <div dangerouslySetInnerHTML={{ __html: relatorioHtml }}>
-
-          </div>
+          {/* <div dangerouslySetInnerHTML={{ __html: relatorioHtml }}/> */}
           {/* <ReportTable relatorio={relatorio} /> */}
+          <Relatorio2 />
         </div>
       </main>
     </>
@@ -291,7 +291,7 @@ function gerarRelatorioHtml(relatorio: IItemReport[]): string {
   idsDefinicao.forEach(id => {
     const relatorioAtual = relatorio.filter(d => d.IdDefinicao === id);
 
-    relatorioAtual.forEach((r,idx) => {
+    relatorioAtual.forEach((r, idx) => {
 
       html += `<tr class=${idx !== relatorioAtual.length - 1 ? "'no_border_row'" : ""}>
         ${idx === 0 ? `<td rowspan=${relatorioAtual.length}>${id}</td>` : ""}
@@ -304,9 +304,9 @@ function gerarRelatorioHtml(relatorio: IItemReport[]): string {
         <td>${r.TemPermissao || ""}</td>
         <td>${r.DeveriaTerPermissao || ""}</td>
       </tr>`
-      
+
     });
-    
+
   });
 
   html += "</table>";
