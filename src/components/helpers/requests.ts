@@ -4,15 +4,16 @@ type ReqMethods = 'GET' | 'POST' | 'PATCH';
 
 const Headers = { Accept: 'application/json;odata=nometadata' };
 
-export async function GetDefinition(Env: 'HML' | 'PROD') {
+export async function GetDefinition(Env: 'HML' | 'PROD'): Promise<{ data: { value: IDefinitionItem[] } }> {
     const Site = Env === 'HML' ? 'http://homologacao2/sites/TI' : 'http://equipes/sites/TI';
     const Method: ReqMethods = 'GET';
     const Uri = '_api/web/lists/PermissionamentoEntidadesList/items?$top=5000&$filter=Ativo eq 1&$select=URLSite/URLSite,URLSite/Title,ListaBiblioteca/Title,*&$expand=URLSite,ListaBiblioteca';
+    // const Uri = `_api/web/lists/PermissionamentoEntidadesList/items?$top=5000&$filter=(URLSiteId eq 12 or URLSiteId eq 26 or URLSiteId eq 27 or URLSiteId eq 6 or URLSiteId eq 29 or URLSiteId eq 28 or URLSiteId eq 30 or URLSiteId eq 3 or URLSiteId eq 24 or URLSiteId eq 39 or URLSiteId eq 31) and Ativo eq 1&$select=URLSite/URLSite,URLSite/Title,ListaBiblioteca/Title,*&$expand=URLSite,ListaBiblioteca`
 
     return await RequestFlow({ Site, Method, Uri, Headers });
 }
 
-export async function GetDefinitionFields(Env: 'HML' | 'PROD') {
+export async function GetDefinitionFields(Env: 'HML' | 'PROD'): Promise<{ data: { value: IDefinitionFieldsItem[] } }> {
     const Site = Env === 'HML' ? 'http://homologacao2/sites/TI' : 'http://equipes/sites/TI';
     const Method: ReqMethods = 'GET';
     const Uri = '_api/web/lists/PermissionamentoEntidadesList/Fields?$filter=CanBeDeleted eq true and Hidden eq false and ReadOnlyField eq false&$select=EntityPropertyName,Title,Description,LookupList';
@@ -20,7 +21,7 @@ export async function GetDefinitionFields(Env: 'HML' | 'PROD') {
     return await RequestFlow({ Site, Method, Uri, Headers });
 }
 
-export async function GetSites(Env: 'HML' | 'PROD') {
+export async function GetSites(Env: 'HML' | 'PROD'): Promise<{ data: { value: ISiteItem[] } }> {
     const Site = Env === 'HML' ? 'http://homologacao2/sites/TI' : 'http://equipes/sites/TI';
     const Method: ReqMethods = 'GET';
     const Uri = '_api/web/lists/PermissionamentoSitesList/items?$top=5000&$select=Id,Title,Ativo,URLSite,OnPremises';
@@ -36,7 +37,7 @@ export async function GetEntities(Env: 'HML' | 'PROD') {
     return await RequestFlow({ Site, Method, Uri, Headers });
 }
 
-export async function GetRoleAssignments(Env: 'HML' | 'PROD') {
+export async function GetRoleAssignments(Env: 'HML' | 'PROD'): Promise<{ data: IRoleAssignmentData }> {
     const Site = Env === 'HML' ? 'http://homologacao2/sites/TI' : 'http://equipes/sites/TI';
     const Method: ReqMethods = 'GET';
     const Uri = '_api/web/lists/PermissionamentoNiveisPermissaoList?$select=Id,Items/Id,Items/Title&$expand=Items';

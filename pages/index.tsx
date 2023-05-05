@@ -3,15 +3,54 @@ import styles from '../styles/Home.module.css';
 import ReportTable from '../src/components/ReportTable';
 import { Permission, fieldGroupsList, roleAssignmentsList } from '../mocks/sitePermDefinition';
 import Relatorio2 from '../src/pages/Relatorio2';
+import Flow from '../src/pages/Flow';
+import { useEffect, useRef, useState } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import { GetDefinition, GetRoleAssignments, GetDefinitionFields, GetSites } from '../src/components/helpers/requests';
+// import { preDataFlow } from '../mocks/respFlow';
 
+const env = 'PROD';
 
 export default function Home() {
 
+  // const [preDados, setPreDados] = useState<IPreDados>();
+  const [loading, setLoading] = useState(false);
+  const toastId = useRef<any>(null);
+
   const preDados: IPreDados = {
+    // permissoesEntidade: preDataFlow.permissoesEntidade as unknown as ISiteDefinition[],
+    // gruposCampos: preDataFlow.gruposCampos as IFieldGroup[],
+    // niveisPermissoes: preDataFlow.niveisPermissoes as IRoleAssignmentsList,
     permissoesEntidade: Permission as unknown as ISiteDefinition[],
     gruposCampos: fieldGroupsList as IFieldGroup[],
     niveisPermissoes: roleAssignmentsList as IRoleAssignmentsList,
   }
+
+  // function handleData() {
+  //   setLoading(true);
+  //   toastId.current = toast.loading('Carregando...', { autoClose: false });
+
+  //   Promise.all([GetDefinition(env), GetRoleAssignments(env), GetDefinitionFields(env), GetSites(env)])
+  //     .then(responses => {
+  //       const Definition = responses[0].data.value
+  //       const RoleAssignments = responses[1].data
+  //       const DefinitionFields = responses[2].data.value
+  //       const Sites = responses[3].data.value
+
+  //       // setSpData({ Definition, RoleAssignments, DefinitionFields, Sites });
+  //     })
+  //     .finally(() => {
+  //       setLoading(false);
+  //       toast.dismiss(toastId.current);
+  //       toastId.current = toast.success('Carregado com sucesso!', { autoClose: 2500 });
+  //     })
+
+  // }
+
+  // useEffect(handleData, []);
+
+
+  if (!preDados) return null;
 
   // const relatorio = gerarRelatorioPermissoes(preDados);
   // const relatorioHtml = gerarRelatorioHtml(relatorio);
@@ -26,11 +65,14 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
+      <ToastContainer position='top-center' theme='dark' />
+
       <main className={styles.main}>
         <div className={styles.container}>
-          {/* <div dangerouslySetInnerHTML={{ __html: relatorioHtml }}/> */}
           {/* <ReportTable relatorio={relatorio} /> */}
+          {/* <div dangerouslySetInnerHTML={{ __html: relatorioHtml }}/> */}
           <Relatorio2 />
+          {/* <Flow /> */}
         </div>
       </main>
     </>
@@ -147,7 +189,7 @@ function verificarPermissoesGrupos(item: ISiteDefinition, { gruposCampos, niveis
   }
 
   // Definindo os grupos que serão verificados na entidade.
-  const groups = obterGruposENiveisDefinicao(item, gruposCampos, niveisPermissoes);
+  const groups: IGroupReport[] = obterGruposENiveisDefinicao(item, gruposCampos, niveisPermissoes);
 
   const RoleAss = {
     [`${TipoEntidade.Site}`]: item.SitePermissions.RoleAssignments,
@@ -158,7 +200,7 @@ function verificarPermissoesGrupos(item: ISiteDefinition, { gruposCampos, niveis
   let RoleAssignments: IRoleAssignment[] = Array.isArray(Role) && Role && Role?.length ? Role : [];
   RoleAssignments = RoleAssignments.filter(r => r.RoleDefinitionBindings.filter(d => d.Name !== "Acesso Limitado" && d.Name !== "Limited Access").length);
 
-  const groupReports: any[] = groups.map(g => {
+  const groupReports = groups.map(g => {
 
     const permOnSite: IRoleAssignment = RoleAssignments.filter(r => r.Member.Title === g.Title)[0];
     const permOnSiteNames = permOnSite ? permOnSite.RoleDefinitionBindings.filter(r => r.Name !== "Acesso Limitado").map(r => r.Name).sort() : null
@@ -212,7 +254,7 @@ function verificarPermissoesGrupos(item: ISiteDefinition, { gruposCampos, niveis
       else return null;
     }
 
-  }).filter(i => i !== null);
+  }).filter(i => i !== null) as IItemReport[];
 
   const qtdPermissoesDefinidas = groups.filter(g => g.RoleSpIds).length;
   const qtdPermissoesNaEntidade = RoleAssignments.length;

@@ -1,5 +1,6 @@
 interface ISiteDefinition {
   URLSite: {
+    URLSite: string
     Title: string
   }
   FileSystemObjectType: number
@@ -175,4 +176,18 @@ interface IParentWeb {
   Title: string
   WebTemplate: string
   WebTemplateId: number
+}
+
+interface IGroupReport {
+  Title: string;
+  RoleSpIds: number[] | null;
+  RoleNames: string[] | null;
+  RoleIds: number[] | null;
+}
+
+interface ISPData {
+  Definition: any;
+  RoleAssignments: any;
+  DefinitionFields: any;
+  Sites: any;
 }
